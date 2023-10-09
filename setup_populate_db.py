@@ -1,33 +1,36 @@
-from app import app, db, User
+from app import db, app, User, Product
 from werkzeug.security import generate_password_hash
 
-# List of users to be added to the database
-users_to_add = [
-    {"username": "admin", "password": "admin_password"},
-    {"username": "user1", "password": "user1_password"},
-    {"username": "user2", "password": "user2_password"},
-    {"username": "user3", "password": "user3_password"},
-]
-
-# Create an application context
-with app.app_context():
-    # Create the database and table
-    db.create_all()
-    
-    # Add user instances to the session
-    for user_info in users_to_add:
-        # Check if user already exists
-        existing_user = User.query.filter_by(username=user_info["username"]).first()
+def setup_users_db():
+    with app.app_context():
+        engine = db.engines['users']
+        db.metadata.create_all(engine)
         
-        if existing_user is None:
-            new_user = User(
-                username=user_info["username"],
-                password=generate_password_hash(user_info["password"], method='pbkdf2:sha256')
-            )
-            db.session.add(new_user)
+        user = User(username='admin', password=generate_password_hash('adminpassword', method='pbkdf2:sha256'))
+        
+        existing_user = User.query.filter_by(username=user.username).first()
+        if not existing_user:
+            db.session.add(user)
+            db.session.commit()
+            print('User added: ', user.username)
         else:
-            print(f"User {user_info['username']} already exists. Skipping...")
+            print('User already exists: ', user.username)
 
-    # Commit the session to the database
-    print('Database setup and populated.')
-    db.session.commit()
+def setup_products_db():
+    with app.app_context():
+        engine = db.get_engine(app, bind='products')
+        db.metadata.create_all(engine)
+        
+        product = Product(name='Example Product', description='This is an example product.')
+        
+        existing_product = Product.query.filter_by(name=product.name).first()
+        if not existing_product:
+            db.session.add(product)
+            db.session.commit()
+            print('Product added: ', product.name)
+        else:
+            print('Product already exists: ', product.name)
+
+if __name__ == "__main__":
+    setup_users_db()
+    setup_products_db()

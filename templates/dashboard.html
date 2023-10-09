@@ -5,41 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f8f8;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
-        
-        .dashboard {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        
-        a {
-            text-decoration: none;
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            margin-top: 20px;
-            display: inline-block;
-        }
-    </style>
+    <!-- [include any CSS or JS links here...] -->
 </head>
 
 <body>
-    <div class="dashboard">
-        <h1>Welcome to Admin Dashboard</h1>
-        <a href="{{ url_for('logout') }}">Logout</a>
-    </div>
+    <h1>Admin Dashboard</h1>
+
+    <form method="POST" action="{{ url_for('dashboard') }}">
+        <label for="name">Product Name:</label>
+        <input type="text" id="name" name="name" required>
+        <br>
+        <label for="description">Product Description:</label>
+        <input type="text" id="description" name="description">
+        <br><br>
+        <input type="submit" value="Add Product">
+    </form>
+
+    <h2>Product List</h2>
+    <ul>
+        {% for product in products %}
+        <li>{{ product.name }} - {{ product.description }}</li>
+        {% endfor %}
+    </ul>
 </body>
 
 </html>

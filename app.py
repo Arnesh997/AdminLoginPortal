@@ -3,39 +3,44 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'yoursecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+app.config['SQLALCHEMY_BINDS'] = {
+    'users': 'sqlite:///users.db',
+    'products': 'sqlite:///products.db'
+}
+
 db = SQLAlchemy(app)
 
 class User(db.Model):
+    __tablename__ = 'user'
+    __bind_key__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            session['user_id'] = user.id
-            return redirect(url_for('dashboard'))
-        else:
-            # You might want to add a message here about login failure
-            return redirect(url_for('login'))
-    return render_template('login.html')
+class Product(db.Model):
+    __bind_key__ = 'products'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.String(500), nullable=True)
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('dashboard.html')
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        new_product = Product(name=name, description=description)
+        db.session.add(new_product)
+        db.session.commit()
+        return redirect(url_for('dashboard'))
 
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)
-    return redirect(url_for('login'))
+    products = Product.query.all()
+    return render_template('dashboard.html', products=products)
+
+# [include other routes...]
 
 if __name__ == "__main__":
     app.run(debug=True)
